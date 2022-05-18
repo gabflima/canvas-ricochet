@@ -56,17 +56,34 @@
       this.rows = 3;
       this.total = 0;
       this.count = new Array(this.rows);
-      for (let i = 0; i < this.rows; i++){
-        this.count[i] = this.columns;
+      for (let row = 0; row < this.rows; i++){
+        let isBrickActive = new Array(this.columns);
+        for (let column = 0; column < this.columns; column++){
+          isBrickActive[column] = true;
+        }
+        this.count[row] = isBrickActive;
       };
     },
     draw: function(){
       for (let row = 0; row < this.rows; row++){
         for (let column = 0; column < this.columns; column++){
-          context.fillStyle = this.gradient(row);
-          context.fillRect(this.x(column), this.y(row), this.width, this.height);
+          if (this.count[row][column]){
+            if(Ball.x >= this.x(column) && Ball.x <= (this.x(column) + this.width) && Ball.y >= this.y(row) && Ball.y <= (this.y(row) + this.height)){
+              this.collide(row, column);
+              continue;
+            }
+            context.fillStyle = this.gradient(row);
+            context.fillRect(this.x(column), this.y(row), this.width, this.height);
+          }
         }
       }
+      if (this.total === this.rows * this.columns){
+        Game.levelUp();
+      }
+    },
+    collide: function(row, column){
+      this.count[row][column] = false;
+      Ball.speedY = - Ball.speedY;
     },
     x: function(column){
       return (column * this.width) + (column * this.gaps);
@@ -121,7 +138,13 @@
       context.fillStyle = this.gradient();
       context.fill();
     },
-    move: function() {},
+    move: function() {
+      if (Ctrl.left && (this.x < Game.width - (this.width / 2))){
+        this.x += this.speed;
+      } else if(Ctrl.right && this.x > -this.width / 2) {
+        this.x -= this.speed;
+      }
+    },
     gradient: function () {
       if (this.gradientCache){
         return this.gradientCache;
@@ -154,13 +177,88 @@
       context.fillStyle = '#eee';
       context.fill();
     },
-    edges: function() {},
-    collide: function() {},
-    move: function() {}
+    edges: function() {
+      if (this.y < 1){
+        this.y = 1;
+        this.speedY = -this.speedY;
+      } else if (this.y > Game.height) {
+        this.speedY = this.speedX = 0;
+        this.y = this.x = 1000;
+        Screen.gameover();
+        canvas.addEventListener('click', Game.restartGame, false);
+        return;
+      }
+
+      if (this.x < 1){
+        this.x = 1;
+        this.speedX = - this.speedX;
+      } else if (this.x > Game.width) {
+        this.x = Game.width - 1;
+        this.speedX = - this.speedX;
+      }
+    },
+    collide: function() {
+      if (this.x >= Paddle.x && this.x <= (Paddle.x + Paddle.width) &&
+          this.y >= Paddle.y && this.y <= (Paddle.y + Paddle.height)) {
+        this.speedX = 7 * ((this.x - (Paddle.x + Paddle.width / 2))/ Paddle.width);
+        this.speedY = - this.speedY;
+      }
+    },
+    move: function() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+    }
   };
 
   let Ctrl = {
-    init: function(){}
+    init: function(){
+      window.addEventListener('keydown', this.keyDown, true);
+      window.addEventListener('keyup', this.keyUp, true);
+      window.addEventListener('mousemove', this.movePaddle, true);
+
+      Game.canvas.addEventListener('touchstart', this.movePaddle, false);
+      Game.canvas.addEventListener('touchmove', this.movePaddle, false);
+      Game.canvas.addEventListener('touchmove', this.stopTouchScroll, false);
+    },
+    movePaddle: function(event) {
+      let mouseX = event.pageX;
+      let canvasX = Game.canvas.offsetLeft;
+
+      let paddleMid = Paddle.width / 2;
+
+      if(mouseX > canvasX && mouseX < canvasX + Game.width) {
+        let newX = mouseX - canvasX;
+        newX -= paddleMid;
+        Paddle.x = newX;
+      }
+    },
+    stopTouchScroll: function(event){
+      event.preventDefault();
+    },
+    keyDown: function(event){
+      switch(event.keyCode){
+        case 39: //left
+          Ctrl.left = true;
+          break;
+        case 37: //right
+          Ctrl.right = true;
+          break;
+        default:
+          break;
+      }
+    },
+    keyUp: function(event){
+      switch(event.keyCode){
+        case 39: //left
+          Ctrl.left = false;
+          break;
+        case 37: //right
+          Ctrl.right = false;
+          break;
+        default:
+          break;
+      }
+    }
   };
 
   window.onload = function(){
