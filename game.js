@@ -11,7 +11,22 @@
   })();
 
   let context = null;
-  
+
+  let PlayerStats = {
+    init: function() {
+      this.level = 1;
+      this.score = 0;
+    },
+    levelUp: function() {
+      if (this.level < 5) {
+        this.level += 1;
+      }
+    },
+    brickDestroyed: function() {
+      this.score += 1;
+    }
+  };
+
   let Screen = {
     welcome: function(){
       this.text = 'CANVAS RICOCHET';
@@ -41,17 +56,13 @@
   }
 
   let Hud = {
-    init: function() {
-      this.lv = 1;
-      this.score = 0;
-    },
     draw: function(){
       context.font = '12px helvetica, arial';
       context.fillStyle = 'white';
       context.textAlign = 'left';
-      context.fillText('Score: ' + this.score, 5, Game.height - 5);
+      context.fillText('Score: ' + PlayerStats.score, 5, Game.height - 5);
       context.textAlign = 'right';
-      context.fillText('LV: ' + this.lv, Game.width - 5, Game.height - 5);
+      context.fillText('LV: ' + PlayerStats.level, Game.width - 5, Game.height - 5);
     }
   };
 
@@ -71,7 +82,6 @@
     runGame: function(){
       Game.canvas.removeEventListener('click', Game.runGame, false);
       Game.init();
-      Game.animate();
     },
     restartGame: function(){
       Game.canvas.removeEventListener('click', Game.restartGame, false);
@@ -82,16 +92,13 @@
       Game.draw();
     },
     levelUp: function() {
-      Hud.lv += 1;
+      PlayerStats.levelUp();
       Bricks.init();
       Ball.init();
       Paddle.init();
     },
-    levelLimit: function(lv){
-      return lv > 5 ? 5 : lv;
-    },
     init: function(){
-      Hud.init();
+      PlayerStats.init();
       Ball.init();
       Paddle.init();
       Bricks.init();
@@ -119,7 +126,7 @@
     width: 80,
     height: 15,
     init: function() {  
-      this.rows = 2 + Game.levelLimit(Hud.lv);
+      this.rows = 2 + PlayerStats.level;
       this.total = 0;
       this.count = new Array(this.rows);
       for (let row = 0; row < this.rows; row++){
@@ -148,7 +155,7 @@
       }
     },
     collide: function(row, column){
-      Hud.score += 1;
+      PlayerStats.brickDestroyed();
       this.total += 1;
       this.count[row][column] = false;
       Ball.speedY = - Ball.speedY;
@@ -231,8 +238,8 @@
     init: function() {
       this.x = 120;
       this.y = 120;
-      this.speedX = 1 + (0.4 * Hud.lv);
-      this.speedY = -1.5 - (0.4 * Hud.lv);
+      this.speedX = 1 + (0.4 * PlayerStats.level);
+      this.speedY = -1.5 - (0.4 * PlayerStats.level);
     },
     draw: function(){
       this.edges();
