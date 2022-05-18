@@ -11,6 +11,50 @@
   })();
 
   let context = null;
+  
+  let Screen = {
+    welcome: function(){
+      this.text = 'CANVAS RICOCHET';
+      this.textSub = 'Click to Start';
+      this.textColor = 'white';
+      this.create();
+    },
+    gameOver: function(){
+      this.text = 'Game Over';
+      this.textSub = 'Click to Retry';
+      this.textColor = 'red';
+      this.create();
+    },
+    create: function(){
+      context.fillStyle = 'black';
+      context.fillRect(0, 0, Game.width, Game.height);
+
+      context.fillStyle = this.textColor;
+      context.textAlign = 'center';
+      context.font = '40px helvetica, arial';
+      context.fillText(this.text, Game.width / 2, Game.height / 2);
+
+      context.fillStyle = '#999999';
+      context.font = '20px helvetica, arial';
+      context.fillText(this.textSub, Game.width / 2, Game.height / 2 + 30);
+    }
+  }
+
+  let Hud = {
+    init: function() {
+      this.lv = 1;
+      this.score = 0;
+    },
+    draw: function(){
+      context.font = '12px helvetica, arial';
+      context.fillStyle = 'white';
+      context.textAlign = 'left';
+      context.fillText('Score: ' + this.score, 5, Game.height - 5);
+      context.textAlign = 'right';
+      context.fillText('LV: ' + this.lv, Game.width - 5, Game.height - 5);
+    }
+  };
+
   let Game = {
     canvas: document.getElementById('canvas'),
     setup: function(){
@@ -18,15 +62,36 @@
         context = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
-        this.init();
+
+        Screen.welcome();
+        this.canvas.addEventListener('click', this.runGame, false);
         Ctrl.init();
       }
+    },
+    runGame: function(){
+      Game.canvas.removeEventListener('click', Game.runGame, false);
+      Game.init();
+      Game.animate();
+    },
+    restartGame: function(){
+      Game.canvas.removeEventListener('click', Game.restartGame, false);
+      Game.init();
     },
     animate: function(){
       Game.play = requestAnimFrame(Game.animate);
       Game.draw();
     },
+    levelUp: function() {
+      Hud.lv += 1;
+      Bricks.init();
+      Ball.init();
+      Paddle.init();
+    },
+    levelLimit: function(lv){
+      return lv > 5 ? 5 : lv;
+    },
     init: function(){
+      Hud.init();
       Ball.init();
       Paddle.init();
       Bricks.init();
@@ -34,9 +99,10 @@
     },
     draw: function(){
       Background.draw();
-      Ball.draw();
-      Paddle.draw();
       Bricks.draw();
+      Paddle.draw();
+      Hud.draw();
+      Ball.draw();
     }
   };
 
@@ -53,10 +119,10 @@
     width: 80,
     height: 15,
     init: function() {  
-      this.rows = 3;
+      this.rows = 2 + Game.levelLimit(Hud.lv);
       this.total = 0;
       this.count = new Array(this.rows);
-      for (let row = 0; row < this.rows; i++){
+      for (let row = 0; row < this.rows; row++){
         let isBrickActive = new Array(this.columns);
         for (let column = 0; column < this.columns; column++){
           isBrickActive[column] = true;
@@ -82,6 +148,8 @@
       }
     },
     collide: function(row, column){
+      Hud.score += 1;
+      this.total += 1;
       this.count[row][column] = false;
       Ball.speedY = - Ball.speedY;
     },
@@ -163,8 +231,8 @@
     init: function() {
       this.x = 120;
       this.y = 120;
-      this.speedX = 2;
-      this.speedY = -2;
+      this.speedX = 1 + (0.4 * Hud.lv);
+      this.speedY = -1.5 - (0.4 * Hud.lv);
     },
     draw: function(){
       this.edges();
@@ -184,7 +252,7 @@
       } else if (this.y > Game.height) {
         this.speedY = this.speedX = 0;
         this.y = this.x = 1000;
-        Screen.gameover();
+        Screen.gameOver();
         canvas.addEventListener('click', Game.restartGame, false);
         return;
       }
