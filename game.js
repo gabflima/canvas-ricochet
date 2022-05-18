@@ -181,9 +181,9 @@
   };
 
   let Paddle = {
-    w: 90,
-    h: 20,
-    r: 9,
+    width: 90,
+    height: 20,
+    radius: 9,
     init: function() {  
       this.x = 100;
       this.y = 210;
@@ -194,22 +194,22 @@
 
       context.beginPath();
       context.moveTo(this.x, this.y);
-      context.arcTo(this.x + this.w, this.y, this.x + this.w, this.y + this.r, this.r);
-      context.lineTo(this.x + this.w, this.y + this.h - this.r);
-      context.arcTo(this.x + this.w, this.y + this.h, this.x + this.w - this.r, this.y + this.h, this.r);
-      context.lineTo(this.x + this.r, this.y + this.h);
-      context.arcTo(this.x, this.y + this.h, this.x, this.y + this.h - this.r, this.r);
-      context.lineTo(this.x, this.y + this.r);
-      context.arcTo(this.x, this.y, this.x + this.r, this.y, this.r);
+      context.arcTo(this.x + this.width, this.y, this.x + this.width, this.y + this.radius, this.radius);
+      context.lineTo(this.x + this.width, this.y + this.height - this.radius);
+      context.arcTo(this.x + this.width, this.y + this.height, this.x + this.width - this.radius, this.y + this.height, this.radius);
+      context.lineTo(this.x + this.radius, this.y + this.height);
+      context.arcTo(this.x, this.y + this.height, this.x, this.y + this.height - this.radius, this.radius);
+      context.lineTo(this.x, this.y + this.radius);
+      context.arcTo(this.x, this.y, this.x + this.radius, this.y, this.radius);
       context.closePath();
 
       context.fillStyle = this.gradient();
       context.fill();
     },
     move: function() {
-      if (Ctrl.left && (this.x < Game.width - (this.width / 2))){
+      if (Ctrl.left && (this.x < (Game.width - (this.width / 2)))){
         this.x += this.speed;
-      } else if(Ctrl.right && this.x > -this.width / 2) {
+      } else if(Ctrl.right && this.x > (-this.width / 2)) {
         this.x -= this.speed;
       }
     },
@@ -279,6 +279,8 @@
   };
 
   let Ctrl = {
+    left: false,
+    right: false,
     init: function(){
       window.addEventListener('keydown', this.keyDown, true);
       window.addEventListener('keyup', this.keyUp, true);
